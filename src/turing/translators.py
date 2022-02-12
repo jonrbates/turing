@@ -123,7 +123,7 @@ class WCMTranslator(Module):
         self.project_down = ProjectDown(self.slices)
         self.indicate_visited_position = IndicateVisitedPosition(self.slices)
         self.binary_search_layers = ModuleList((BinarySearchStep(self.slices, j=j) for j in range(self.w_pos)))
-        self.get_la_stwritten_symbol = GetLastWrittenSymbol(self.slices)
+        self.get_last_written_symbol = GetLastWrittenSymbol(self.slices)
         self.get_initial_symbol = GetInitialSymbol(self.slices)      
         self.get_v = GetV(self.slices)
         empty_symbol = self.one_alphabet("E")
@@ -336,7 +336,7 @@ class WCMTranslator(Module):
         x = self.indicate_visited_position(x)        
         for layer in self.binary_search_layers:
             x = layer(x)
-        x = self.get_la_stwritten_symbol(x)
+        x = self.get_last_written_symbol(x)
         x = self.get_initial_symbol(x, memory)
         x = self.get_v(x)
         x = self.arrange_symbols(x)        

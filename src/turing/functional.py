@@ -1,8 +1,8 @@
 import torch
 import torch.nn.functional as F
 
-def hard_max_attention(query, key, value, w_q, b_q, w_k, b_k, w_v, b_v, k_0, v_0):
-    """A hard max attention transformer layer    
+def attention_forward(query, key, value, w_q, b_q, w_k, b_k, w_v, b_v, k_0, v_0, use_hard_max=False):
+    """Analog of F.multi_head_attention_forward 
 
     Args:
         query : (L, E)
@@ -35,12 +35,17 @@ def hard_max_attention(query, key, value, w_q, b_q, w_k, b_k, w_v, b_v, k_0, v_0
     k = torch.cat([k_0, k])
     v = torch.cat([v_0, v])
     tau = torch.mm(q, k.transpose(0, 1))
-    # TODO: remove iteration
-    max_values = torch.max(tau, 1).values
-    transfer = torch.zeros(L, S+1)
-    for i, val in enumerate(max_values):
-        idx = torch.isclose(tau[i, :], val)
-        transfer[i, idx] = 1
-    transfer = F.normalize(transfer, p=1, dim=1)
+
+    if use_hard_max:
+        # TODO: remove iteration
+        max_values = torch.max(tau, 1).values
+        transfer = torch.zeros(L, S+1)
+        for i, val in enumerate(max_values):
+            idx = torch.isclose(tau[i, :], val)
+            transfer[i, idx] = 1
+        transfer = F.normalize(transfer, p=1, dim=1)
+    else:
+        transfer = F.softmax(tau * 9999, -1)
+
     output = torch.mm(transfer, v)
     return output

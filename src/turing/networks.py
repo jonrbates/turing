@@ -6,7 +6,7 @@ from torch.nn import (
     Linear,
     Parameter
 )
-from turing.functional import hard_max_attention
+from turing.functional import attention_forward
 from turing.types import (
     StateType,
     SymbolType,
@@ -280,17 +280,17 @@ class IndicateVisitedPosition(Module):
         k_0 = torch.zeros(w_pos+1)
         k_0[w_pos] = w_pos-1
         v_0 = torch.zeros(d_in)
-        self.w_q = w_q
-        self.b_q = b_q
-        self.w_k = w_k
-        self.b_k = b_k
-        self.w_v = w_v
-        self.b_v = b_v
-        self.k_0 = k_0
-        self.v_0 = v_0
+        self.w_q = Parameter(w_q)
+        self.b_q = Parameter(b_q)
+        self.w_k = Parameter(w_k)
+        self.b_k = Parameter(b_k)
+        self.w_v = Parameter(w_v)
+        self.b_v = Parameter(b_v)
+        self.k_0 = Parameter(k_0)
+        self.v_0 = Parameter(v_0)
 
     def forward(self, x):
-        x += hard_max_attention(x, x, x, 
+        x += attention_forward(x, x, x, 
             self.w_q, self.b_q, self.w_k, self.b_k, self.w_v, self.b_v, self.k_0, self.v_0)
         return x
 
@@ -346,18 +346,18 @@ class BinarySearchStep(Module):
         weight[scr4_+2, scr4_+2] = 0
         linear.weight = Parameter(weight)
 
-        self.w_q = w_q
-        self.b_q = b_q
-        self.w_k = w_k
-        self.b_k = b_k
-        self.w_v = w_v
-        self.b_v = b_v
-        self.k_0 = k_0
-        self.v_0 = v_0
+        self.w_q = Parameter(w_q)
+        self.b_q = Parameter(b_q)
+        self.w_k = Parameter(w_k)
+        self.b_k = Parameter(b_k)
+        self.w_v = Parameter(w_v)
+        self.b_v = Parameter(b_v)
+        self.k_0 = Parameter(k_0)
+        self.v_0 = Parameter(v_0)
         self.linear = linear
 
     def forward(self, x):
-        x += hard_max_attention(x, x, x, 
+        x += attention_forward(x, x, x, 
             self.w_q, self.b_q, self.w_k, self.b_k, self.w_v, self.b_v, self.k_0, self.v_0)
         x = self.linear(x)
         return x
@@ -415,18 +415,18 @@ class GetLastWrittenSymbol(Module):
             weight[scr3_+k, scr3_+k] = 0
         linear.weight = Parameter(weight)
 
-        self.w_q = w_q
-        self.b_q = b_q
-        self.w_k = w_k
-        self.b_k = b_k
-        self.w_v = w_v
-        self.b_v = b_v
-        self.k_0 = k_0
-        self.v_0 = v_0
+        self.w_q = Parameter(w_q)
+        self.b_q = Parameter(b_q)
+        self.w_k = Parameter(w_k)
+        self.b_k = Parameter(b_k)
+        self.w_v = Parameter(w_v)
+        self.b_v = Parameter(b_v)
+        self.k_0 = Parameter(k_0)
+        self.v_0 = Parameter(v_0)
         self.linear = linear
 
     def forward(self, x):
-        x += hard_max_attention(x, x, x, 
+        x += attention_forward(x, x, x, 
             self.w_q, self.b_q, self.w_k, self.b_k, self.w_v, self.b_v, self.k_0, self.v_0)
         x = self.linear(x)
         return x
@@ -478,18 +478,18 @@ class GetInitialSymbol(Module):
         k_0[w_pos] = w_pos-1
         v_0 = torch.zeros(d_in)
         
-        self.w_q = w_q
-        self.b_q = b_q
-        self.w_k = w_k
-        self.b_k = b_k
-        self.w_v = w_v
-        self.b_v = b_v
-        self.k_0 = k_0
-        self.v_0 = v_0
+        self.w_q = Parameter(w_q)
+        self.b_q = Parameter(b_q)
+        self.w_k = Parameter(w_k)
+        self.b_k = Parameter(b_k)
+        self.w_v = Parameter(w_v)
+        self.b_v = Parameter(b_v)
+        self.k_0 = Parameter(k_0)
+        self.v_0 = Parameter(v_0)
 
     def forward(self, tgt, memory):
         x = tgt
-        x += hard_max_attention(x, memory, memory, 
+        x += attention_forward(x, memory, memory, 
             self.w_q, self.b_q, self.w_k, self.b_k, self.w_v, self.b_v, self.k_0, self.v_0)
         return x
 
