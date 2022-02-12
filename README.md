@@ -29,3 +29,31 @@ We may represent $\delta$ as a directed graph, where the vertices are states and
 </p>
 
 The Turing machine halts when it reaches a *terminal state*. In this case, we have T - the string is balanced - or F - the string is not.
+
+To simulate a Turing machine using a particular network, first specify the transition function (aka *delta*) and terminal states:
+```
+balanced_parentheses_delta = {
+    ("I", "B") : ("R", "B",  1),
+    ("R", "(") : ("R", "(",  1),
+    ("R", ")") : ("M", "*", -1),
+    ("R", "*") : ("R", "*",  1),
+    ("R", "E") : ("V", "E", -1),
+    ("M", "B") : ("F", "*", -1),
+    ("M", "(") : ("R", "*",  1),
+    ("M", "*") : ("M", "*", -1),
+    ("V", "(") : ("F", "*", -1),
+    ("V", "*") : ("V", "*", -1),
+    ("V", "B") : ("T", "B",  1),
+}
+
+balanced_parentheses_terminal_states = ["T", "F"]
+```
+Then run
+```
+from turing.translators import Description, Translator
+description = Description(balanced_parentheses_delta, balanced_parentheses_terminal_states)
+maximum_steps = 100
+tx = Translator(description, T=maximum_steps)
+tape = "B()((()(()))())E"
+tx.simulate(tape)
+```
