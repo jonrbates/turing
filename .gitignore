@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints
+.pytest_cache
+.vscode
+*.egg-info
+*.gv
+
+# virtualenv
+.turing
+
+# temporary scripts
+tmp*.py
+
+notes
