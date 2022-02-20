@@ -8,9 +8,9 @@ from torch.nn import (
 )
 from turing.functional import attention_forward
 from turing.types import (
-    StateType,
-    SymbolType,
-    DeltaType
+    State,
+    Symbol,
+    Delta
 )
 from typing import Dict, List, Tuple
 
@@ -26,7 +26,7 @@ class Transition(Module):
     Reference
         WCM
     """
-    def __init__(self, slices, delta: DeltaType, states: List[StateType], alphabet: List[SymbolType], z2i: Dict[StateType, int], a2i: Dict[SymbolType, int]):
+    def __init__(self, slices, delta: Delta, states: List[State], alphabet: List[Symbol], z2i: Dict[State, int], a2i: Dict[Symbol, int]):
         super().__init__()    
         d_in, w_pos, st_, sym1_, sym2_, pos1_, pos2_, pos3_, scr1_, scr2_, scr3_, scr4_, scr5_ = slices    
         ds = len(states) * len(alphabet)  # domain size

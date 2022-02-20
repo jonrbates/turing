@@ -1,9 +1,9 @@
 import random
 import torch
-from test.helper import BaseTestCase
-from turing.networks import IndicateVisitedPosition
+from test.wcm.helper import TestCase
+from turing.wcm.networks import IndicateVisitedPosition
 
-class TestVisited(BaseTestCase):     
+class TestVisited(TestCase):     
  
     def test_is_visited(self):
         """Claim 6.4

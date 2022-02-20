@@ -1,8 +1,8 @@
 import torch
-from test.helper import BaseTestCase
-from turing.networks import FullAdder
+from test.wcm.helper import TestCase
+from turing.wcm.networks import FullAdder
 
-class TestAdder(BaseTestCase):  
+class TestAdder(TestCase):  
  
     def test_adder(self):
         tx = self.tx

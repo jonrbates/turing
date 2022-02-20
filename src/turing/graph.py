@@ -22,7 +22,24 @@ def generate(
         alphabet.add(a)
         alphabet.add(u)
 
-    dot = Digraph("tm", format="png", node_attr={'color': 'lightblue2', 'style': 'filled'})
+    dot = Digraph(
+        "tm", 
+        format="png", 
+        node_attr={
+            'color': 'lightblue2', 
+            'fontcolor': 'black',
+            'style': 'filled',
+        }, 
+        edge_attr={
+            'color': 'gray',
+            'fontcolor': 'white',
+            'style': 'filled',
+        }, 
+        graph_attr={
+            'bgcolor': 'grey12',
+            'fontname': 'Cascadia Mono'
+        }
+    )
 
     # nodes
     def get_shape(state):

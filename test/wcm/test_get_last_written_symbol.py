@@ -1,9 +1,9 @@
 import random
 import torch
-from test.helper import BaseTestCase
-from turing.networks import GetLastWrittenSymbol
+from test.wcm.helper import TestCase
+from turing.wcm.networks import GetLastWrittenSymbol
 
-class TestRetrieve(BaseTestCase):
+class TestRetrieve(TestCase):
 
     def test_single_layer(self):
         """Claim C.6

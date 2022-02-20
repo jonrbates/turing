@@ -1,5 +1,7 @@
 import torch
 import torch.nn.functional as F
+from torch import Tensor
+
 
 def attention_forward(query, key, value, w_q, b_q, w_k, b_k, w_v, b_v, k_0, v_0, use_hard_max=False):
     """Analog of F.multi_head_attention_forward 
@@ -49,3 +51,7 @@ def attention_forward(query, key, value, w_q, b_q, w_k, b_k, w_v, b_v, k_0, v_0,
 
     output = torch.mm(transfer, v)
     return output
+
+
+def saturated_relu(x: Tensor):
+    return F.relu(x) - F.relu(x-1)

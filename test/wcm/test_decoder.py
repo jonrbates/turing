@@ -1,9 +1,9 @@
 import random
 import torch
-from test.helper import BaseTestCase
-from turing.networks import Transition, FullAdder, PreprocessForAdder
+from test.wcm.helper import TestCase
+from turing.wcm.networks import Transition, FullAdder, PreprocessForAdder
 
-class TestDecoder(BaseTestCase):
+class TestDecoder(TestCase):
 
     def test_decode_step(self):
         tx = self.tx

@@ -1,9 +1,9 @@
 import random
 import torch
-from test.helper import BaseTestCase
-from turing.networks import BinarySearchStep
+from test.wcm.helper import TestCase
+from turing.wcm.networks import BinarySearchStep
 
-class TestBinarySearch(BaseTestCase):
+class TestBinarySearch(TestCase):
 
     def Bin_j(self, i: int, j: int):
         pre = self.tx.Bin(i)

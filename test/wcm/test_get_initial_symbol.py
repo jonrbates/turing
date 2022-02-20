@@ -1,10 +1,9 @@
 import random
-from re import U
 import torch
-from test.helper import BaseTestCase
-from turing.networks import GetInitialSymbol
+from test.wcm.helper import TestCase
+from turing.wcm.networks import GetInitialSymbol
 
-class TestCrossAttention(BaseTestCase):
+class TestCrossAttention(TestCase):
 
     def test_single_layer(self):
         """Claim C.7

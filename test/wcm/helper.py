@@ -1,11 +1,11 @@
 import unittest
 import torch
-from turing.translators import Translator
+from turing.wcm.simulator import Simulator
 
-class BaseTestCase(unittest.TestCase):
+class TestCase(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.tx = Translator(T=17)   
+        self.tx = Simulator(T=17)   
 
     def assertTensorsEqual(self, expected, actual, msg=""):        
         if not torch.equal(expected, actual):

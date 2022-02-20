@@ -5,7 +5,7 @@ from torch.nn import (
     Module, 
     ModuleList
 )
-from turing.networks import (
+from turing.wcm.networks import (
     ArrangeSymbols, 
     BinarySearchStep, 
     CombineSymbols, 
@@ -19,14 +19,14 @@ from turing.networks import (
     Transition, 
 )
 from turing.types import (    
-    DeltaType,
-    StateType
+    Delta,
+    State
 )
 from typing import List
 
 
 # Default turing machine description
-balanced_parentheses_delta = {
+balanced_parentheses_transition_function = {
     ("I", "B") : ("R", "B",  1),
     ("R", "(") : ("R", "(",  1),
     ("R", ")") : ("M", "*", -1),
@@ -50,12 +50,12 @@ class Description():
     terminal_states: possible end states
 
     """
-    def __init__(self, delta: DeltaType = balanced_parentheses_delta, terminal_states: List[StateType] = balanced_parentheses_terminal_states):
+    def __init__(self, delta: Delta = balanced_parentheses_transition_function, terminal_states: List[State] = balanced_parentheses_terminal_states):
         self.delta = delta
         self.terminal_states = terminal_states
 
 
-class Translator():
+class Simulator():
     """Class to simulate a turing machine for a given delta
     
     Available Translation Models:
@@ -66,12 +66,12 @@ class Translator():
     def __new__(self, description: Description=Description(), T: int=100, model: str="wcm"):
         
         if model == "wcm":
-            return WCMTranslator(description, T)
+            return WCMSimulator(description, T)
         else:
             raise NotImplementedError("We haven't implemented this translation model.")
 
 
-class WCMTranslator(Module):
+class WCMSimulator(Module):
     """Implements https://arxiv.org/abs/2107.13163
     """
   
@@ -211,7 +211,8 @@ class WCMTranslator(Module):
         return self._slices
 
     def h(self, z: str, a: str, i: int, l: int):
-        # decoder input for timestep i
+        """Decoder input for timestep i
+        """
         return torch.cat(self.h_partitions(z, a, i, l))
 
     def h_partitions(self, z: str, a: str, i: int, l: int):
@@ -225,11 +226,15 @@ class WCMTranslator(Module):
         return (o_st, o_sym1, o_sym2, o_pos1, o_pos2, o_pos3, o_scr)
 
     def beta(self, i: int):
+        """Position embedding
+        """
         beta = torch.zeros(self.w)
         beta[self._pos1:self._pos2] = Tensor(self.Bin(i))
         return beta        
 
     def one_alphabet(self, a):
+        """Indicator/one-hot vector for symbol
+        """
         o = torch.zeros([len(self.alphabet)])
         o[self.a2i[a]] = 1
         return o
@@ -246,6 +251,8 @@ class WCMTranslator(Module):
             return "UNK"
 
     def one_states(self, z):
+        """Indicator/one-hot vector for state
+        """
         o = torch.zeros([len(self.states)])
         o[self.z2i[z]] = 1
         return o
@@ -261,9 +268,11 @@ class WCMTranslator(Module):
         else:
             return "UNK"
 
-    def Bin(self, i):
+    def Bin(self, i: int) -> List[int]:
+        """Binary representation of i as a List[int]
+        """
         stringbin = f"{i:0{self.w_pos}b}"
-        return list(map(int, list(stringbin)))
+        return list(map(int, stringbin))
 
     def Bin_inverse(self, x: Tensor) -> int:        
         assert x.ndim == 1
@@ -352,6 +361,8 @@ class WCMTranslator(Module):
         return x
 
     def simulate(self, tape: str):
+        """Simulate the turing machine for the given tape via the WCM network
+        """
         E = self.encode_tape(tape)
         cursor = "^"
         pad = " "
