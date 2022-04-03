@@ -62,8 +62,8 @@ so that, given the current state and symbol under the head, the following three 
 (2) the next state;
 (3) the direction to move the head (left or right).
 
-We may represent $\delta$ as a directed graph, where the vertices are states and edges are state transitions. 
-For example, if the machine is in state I and reads symbol B, then we traverse the edge 
+We may represent $\delta$ as a directed graph, where the vertices are states and edges are state transitions.
+For example, if the machine is in state I and reads symbol B, then we traverse the edge
 marked with B and see the next state is R.
 For simplicity, we don't include the written symbol or movement direction in the graph.
 
@@ -71,7 +71,7 @@ For simplicity, we don't include the written symbol or movement direction in the
 <img src="docs/img/tm.png" alt="turing machine DAG for the balanced parentheses problem" />
 </p>
 
-The Turing machine halts when it reaches a *terminal state*. In this example, we have terminal states T, F corresponding to "the string is balanced" or 
+The Turing machine halts when it reaches a *terminal state*. In this example, we have terminal states T, F corresponding to "the string is balanced" or
 "the string is not balanced", respectively.
 
 To simulate a Turing machine using a particular network, first specify the transition function (aka *delta*) and terminal states:
@@ -98,7 +98,7 @@ terminal_states = ["T", "F"]
 Then simulate the machine by running
 
 ```python
-from turing.translators import Description, Simulator
+from turing.wcm.simulator import Description, Simulator
 description = Description(transition_function, terminal_states)
 maximum_steps = 100
 tx = Simulator(description, T=maximum_steps)
