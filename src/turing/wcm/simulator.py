@@ -336,7 +336,7 @@ class WCMSimulator(Module):
         """
         x = tgt        
         x = self.transition(x)
-        # record written symbol
+        # get the written symbol
         _, u = self.project_and_normalize(x, "sym2")
         x = self.preprocess_for_adder(x)
         for layer in self.adder_layers:

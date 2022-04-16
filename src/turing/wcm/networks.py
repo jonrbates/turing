@@ -39,10 +39,8 @@ class Transition(Module):
         for i in range(len(states)):
             for j in range(len(alphabet)):
                 # weights layer 1
-                row = torch.zeros(d_in)        
-                row[st_ + i] = 1
-                row[sym1_ + j] = 1
-                upper[k] = row
+                upper[k, st_ + i] = 1
+                upper[k, sym1_ + j] = 1
                 # weights layer 2
                 z, a = states[i], alphabet[j]
                 if (z, a) in delta:
