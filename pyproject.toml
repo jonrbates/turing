@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turing"
+version = "0.1"
+description = "Simulate Turing machines with neural networks"
+license = { text = "Apache License 2.0" }
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.1",
+    "numpy",
+    "graphviz",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

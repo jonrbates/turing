@@ -372,19 +372,6 @@ class SiegelmannSontag4(Module):
             x_stack])
         o = saturated_relu(o)
 
-        def decode(xx: float) -> str:
-            # top
-            if xx < 1e-8:
-                return ''
-            elif 4*xx-2 > 0:
-                # top is 1
-                return '1' + decode(4*xx-2-1)
-            else:
-                # top is 0
-                return '0' + decode(4*xx-1)
-
-        for w in o[s+2*p:s+3*p].detach():
-            print(w, decode(w.item()))
         # F3, F2
         u = self.configuration_detector(o[:s+2*p])
         # print('beta, gamma', [self.beta(u), self.gamma(u)-1])
@@ -397,7 +384,6 @@ class SiegelmannSontag4(Module):
         # F1
         o = self.linear_F_1(o)
         o = saturated_relu(o)
-        print()
         return o
 
     def fit(self, delta, z2i, states, alphabet, fallback_next_state_and_action=('F', 'noop', 'noop')):

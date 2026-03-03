@@ -14,8 +14,8 @@ from typing import List
 
 # Default turing machine description
 balanced_parentheses_delta_stack = {
-    # is balanced
     # Note: noop = no operation, i.e. no action
+    # is balanced
     ('*',  '(',  '(') : ('A',  'pop', 'push ('),
     ('*',  '(', None) : ('A',  'pop', 'push ('),
     ('*',  ')',  '(') : ('A',  'pop',    'pop'),
@@ -170,20 +170,24 @@ class Simulator(Module):
         self._original_alphabet = description.original_alphabet
         self._a2i = {a: i for i, a in enumerate(self.original_alphabet)}
 
-        # neural network settings
-        self._cantor_base = 4
-        self._cantor_p = 1/2
-        self._p = 2
-
         # i2b = ('empty', 'nonempty')
 
         if version == 4:
             # be consistent with ConfigurationDetector4(self.s+1, self.p).get_v()
             # y = self.generate_y(full_description)
+
+            # neural network settings
+            self._p = 2
+            self._cantor_base = 4
+            self._cantor_p = 1/2   # TODO: fix this factor
             # network module definitions
             self.model = SiegelmannSontag4(self.s, self.p)
             self.model.fit(delta, self.z2i, self.states, self.alphabet)
         elif version == 1:
+            # neural network settings
+            self._p = 2
+            self._cantor_base = 40
+            self._cantor_p = 2
             self.model = SiegelmannSontag1(self.s, self.p)
             self.model.fit(delta, self.z2i, self.states, self.alphabet)
 
@@ -225,42 +229,75 @@ class Simulator(Module):
     def encoding_function(self, a: str):
         return encoding_function(a, self._cantor_base, self._cantor_p)
 
-    def simulate(self, string: str, T=10):
+    def _decode_state(self, x_state: Tensor) -> State:
+        """Decode a state vector to a state name."""
+        if self.version == 4:
+            # x_state has s-1 dims; entry j represents states[j+1]; all-zero = states[0]
+            if x_state.max().item() < 0.5:
+                return self.states[0]
+            return self.states[x_state.argmax().item() + 1]
+        else:
+            return self.states[x_state.argmax().item()]
 
+    def _decode_stack(self, val: float) -> str:
+        """Decode a Cantor-encoded rational number to a string of original symbols.
+        Valid for version=4 (base=4, p=1/2).
+        """
+        if val < 1e-8:
+            return ""
+        elif 4 * val - 2 > 0:
+            sym = self.original_alphabet[1]
+            return str(sym) + self._decode_stack(4 * val - 3)
+        else:
+            sym = self.original_alphabet[0]
+            return str(sym) + self._decode_stack(4 * val - 1)
+
+    def simulate(self, string: str, T=10):
+        """Simulate the stack machine for the given input string.
+
+        Prints the machine state at each step and returns the terminal state.
+        """
         binary_string = list(map(lambda x: self.a2i[x], string))
         initial_stack = self.encoding_function(binary_string)
-        print(initial_stack)
-        print(self.states)
-        # intialize input
+
         if self.version == 4:
-            x = torch.zeros(self.s-1+self.p)
-            x[self.s-1] = initial_stack
+            x = torch.zeros(self.s - 1 + self.p)
+            x[self.s - 1] = initial_stack
             o = x
             for step in range(T):
-                x_state, x_stack = o[:self.s-1].detach(), o[self.s-1:].detach()
-                print(step, x_state)
+                x_state = o[:self.s - 1].detach()
+                x_stack = o[self.s - 1:].detach()
+                z = self._decode_state(x_state)
+                stacks = [self._decode_stack(v.item()) for v in x_stack]
+                print(f"{z:4}  {stacks}")
+                if z in self.terminal_states:
+                    return z
                 o = self(o)
 
         elif self.version == 1:
-            top = int(binary_string[0]) if len(binary_string)>0 else None
+            top = int(binary_string[0]) if len(binary_string) > 0 else None
             s, p = self.s, self.p
-            x = torch.zeros(self.s+3*4*self.p)
+            x = torch.zeros(self.s + 3 * 4 * self.p)
             noisy_top, noisy_nonempty = self.model._sample(top)
             # state
             x[0] = 1
             # TODO: what indexes should have this?
-            low_value = (-8*p**2+2)
-            x[s+4*p:] = low_value
+            low_value = (-8 * p**2 + 2)
+            x[s + 4*p:] = low_value
             # noisy_sub_stack
             x[s] = initial_stack
             # noisy_sub_top
-            x[s+8] = noisy_top
+            x[s + 8] = noisy_top
             # noisy_sub_nonempty
-            x[s+16] = noisy_nonempty
+            x[s + 16] = noisy_nonempty
             o = x
             for step in range(T):
-                x_state, x_stack = o[:self.s].detach(), o[self.s:].detach()
-                print(step, x_state)
+                x_state = o[:self.s].detach()
+                x_stack = o[self.s:].detach()
+                z = self._decode_state(x_state)
+                print(f"{z:4}")
+                if z in self.terminal_states:
+                    return z
                 o = self(o)
 
 

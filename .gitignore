@@ -8,7 +8,7 @@ __pycache__/
 *.gv
 
 # virtualenv
-.turing
+.venv
 
 # temporary scripts
 tmp*.py
