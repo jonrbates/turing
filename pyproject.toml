@@ -12,6 +12,9 @@ dependencies = [
     "torch>=2.1",
     "numpy",
     "graphviz",
+    "notebook",
+    "nbconvert",
+    "ipykernel",
 ]
 
 [tool.setuptools.packages.find]

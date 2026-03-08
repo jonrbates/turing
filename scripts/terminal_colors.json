@@ -1,0 +1,12 @@
+{
+  "font":         "DejaVu Sans Mono",
+  "bg":           "#0d1117",
+  "tape":         "#e6edf3",
+  "labels":       "#bac1c7",
+  "head":         "#FF4444",
+  "state":        "#FFD700",
+  "top_of_stack": "#00FFFF",
+  "match":        "#3FB950",
+  "orange":       "#FF8C00",
+  "dim":          "#484f58"
+}

@@ -1,6 +1,6 @@
 # Siegelmann & Sontag: Neural Nets as Turing Machines
 
-Siegelmann and Sontag proved in 1995 that a fixed recurrent neural network can simulate any Turing machine. Their construction works by encoding the Turing machine tape as numbers stored in the network's hidden state.
+Siegelmann and Sontag proved in 1992 that a fixed recurrent neural network can simulate any Turing machine. Their construction works by encoding the Turing machine tape as numbers stored in the network's hidden state.
 
 This document explains their approach and how to use the implementation in this repo.
 
@@ -8,7 +8,7 @@ This document explains their approach and how to use the implementation in this 
 
 ### The Core Idea: Stacks Instead of a Tape
 
-Rather than operating on a tape directly, Siegelmann & Sontag reformulate the problem using *p-stack machines*. A p-stack machine is equivalent to a Turing machine but stores memory in `p` stacks instead of a tape. Each stack supports three operations: **push**, **pop**, and **peek** (read the top).
+Rather than operating on a tape directly, Siegelmann & Sontag reformulate the problem using *$p$-stack machines*. A $p$-stack machine is equivalent to a Turing machine but stores memory in $p$ stacks instead of a tape. Each stack supports three operations: **push**, **pop**, and **peek** (read the top).
 
 For the balanced parentheses problem, two stacks are enough:
 
@@ -46,7 +46,7 @@ The key mathematical trick is encoding an entire stack as a single rational numb
 
 $$\delta(a_1 a_2 \cdots a_k) = \sum_{i=1}^{k} \frac{b - 1 + 4p(a_i - 1)}{b^i}$$
 
-where `b` is the base and `p` is a scaling factor. For example with `b=4, p=1/2`:
+where $b$ is the base and $p$ is a scaling factor. For example with $b=4$, $p=1/2$:
 
 | Stack contents | Encoded value |
 |---|---|
@@ -55,19 +55,19 @@ where `b` is the base and `p` is a scaling factor. For example with `b=4, p=1/2`
 | `[1]` | 3/4 |
 | `[0, 0, 0]` | 21/64 |
 
-<p><img src="img/cantor_set.gif" alt="cycling values in the 4-Cantor set" /></p>
+<p><img src="img/cantor_set.png" alt="cycling values in the 4-Cantor set" /></p>
 
-The encoding has a crucial property: **push, pop, and peek are all linear functions of the encoded value**. This means the network can manipulate the stack using only linear layers and a saturated ReLU activation $\sigma(x) = \text{clamp}(x, 0, 1)$.
+The encoding has a crucial property: **push, pop, and peek are all linear functions of the encoded value**. This means the network can manipulate the stack using only linear layers and a saturated ReLU activation $\sigma(x) = \mathrm{clamp}(x, 0, 1)$.
 
 ---
 
-### Two Network Versions
+### Two Network Architectures
 
 The paper describes two constructions:
 
-**Version 4 (`version=4`)** — uses `ceil(log2(|states|)) + 1` layers. Each layer is a stage of the computation. This version is fully implemented and working.
+**4-layer (`version=4`)** - uses 4 layers per step. Each layer is a stage of the computation. Fully implemented and working.
 
-**Version 1 (`version=1`)** — uses a single recurrent layer, operating in "real time" (one network step per Turing machine step). This version is currently in development.
+**1-layer (`version=1`)** - uses a single recurrent layer, operating in "real time" (one network step per Turing machine step). Currently in development.
 
 ---
 
@@ -85,7 +85,7 @@ description = Description(
     balanced_parentheses_terminal_states,
 )
 
-# Version 4 (complete)
+# Multi-layer (complete)
 tx = Simulator(description, version=4)
 tx.simulate("(()())")
 ```
@@ -120,20 +120,20 @@ tx = Simulator(description, version=4)
 
 ### Architecture
 
-<p><img src="img/ss1_architecture.png" alt="Siegelmann-Sontag architecture" /></p>
+<p><img src="img/ss1_architecture.png" alt="Siegelmann-Sontag architecture" width='30%' /></p>
 
 The network state at each step is a vector containing:
-- **State part** — one-hot encoding of the current machine state
-- **Stack part** — each stack encoded as a single scalar using the Cantor-set encoding
+- **State part** - one-hot encoding of the current machine state
+- **Stack part** - each stack encoded as a single scalar using the Cantor-set encoding
 
 At each step, a *configuration detector* reads the current state and the top of each stack, identifies the matching transition rule, and produces the next state and stack operations. The weights are set analytically via least-squares from the transition function.
 
-The `saturated_relu` σ(x) = max(0, min(1, x)) serves as the nonlinearity throughout, since its behavior on rational inputs is exact.
+The `saturated_relu` $\sigma(x) = \mathrm{clamp}(x,0,1)$ serves as the nonlinearity throughout, since its behavior on rational inputs is exact.
 
 ---
 
 ### Further Reading
 
-- [Siegelmann & Sontag (1992)](https://www.sciencedirect.com/science/article/pii/S0022000085710136) — original paper
-- `src/turing/ss/networks.py` — `SiegelmannSontag4`, `ConfigurationDetector4`
-- `notebooks/siegelmann_sontag.ipynb` — interactive walkthrough
+- [Siegelmann & Sontag (1995)](https://www.sciencedirect.com/science/article/pii/S0022000085710136)
+- `src/turing/ss/networks.py` - `SiegelmannSontag4`, `ConfigurationDetector4`
+- `notebooks/siegelmann_sontag.ipynb` - interactive walkthrough

@@ -48,7 +48,7 @@ tx = Simulator(description, T=100)
 tx.simulate("B()((()(()))())E")
 ```
 
-**Run the SS simulator** (version 4)
+**Run the SS simulator** (4-layer)
 
 ```python
 from turing.ss.simulator import (
@@ -73,14 +73,14 @@ We want to determine whether a string of parentheses is balanced; e.g. `"(())"` 
 
 A Turing machine solves this by reading the tape `"B()((()(()))())E"` (where `B` and `E` mark the ends). The machine has a *head* that starts at `B` and moves left or right, reading and writing symbols according to its rules. The head position is shown as `^`:
 
-<p><img src="docs/img/bptape_terminal.gif" alt="turing machine solving balanced parentheses" /></p>
+<p><img src="docs/img/bptape_terminal.png" width="308" alt="turing machine solving balanced parentheses" /></p>
 
 The machine has a discrete internal state (I, R, M, V, T, F in the animation). Its behavior is fully defined by a *transition function* $\delta$: given the current state and symbol under the head, $\delta$ outputs (1) the symbol to write, (2) the next state, and (3) which direction to move.
 
 We can visualize $\delta$ as a directed graph. States are vertices; edges are transitions. The initial state is a diamond; terminal states are squares.
 
 <p align="center">
-<img src="docs/img/tm.png" alt="turing machine transition graph for balanced parentheses" />
+<img src="docs/img/tm.png" alt="turing machine transition graph for balanced parentheses" width="60%" />
 </p>
 
 The machine halts when it reaches a terminal state (T = balanced, F = not balanced).
@@ -119,14 +119,7 @@ tx.simulate(tape)
 # prints each step and returns "T" (balanced) or "F" (not balanced)
 ```
 
-`Simulator(description, T=100)` constructs a PyTorch model and analytically sets its weights to simulate the given Turing machine — no training involved. `T` is the maximum number of steps.
-
-**Visualizing the transition graph:**
-
-```python
-from turing.graph import generate
-generate(transition_function, terminal_states=["T", "F"])
-```
+`Simulator(description, T=100)` constructs a PyTorch model and analytically sets its weights to simulate the given Turing machine - no training involved. `T` is the maximum number of steps.
 
 ---
 
@@ -134,6 +127,6 @@ generate(transition_function, terminal_states=["T", "F"])
 
 The `notebooks/` directory contains interactive walkthroughs:
 
-* `balanced_parentheses_part1.ipynb` — build the transition layer from scratch, step through the balanced parentheses problem
-* `balanced_parentheses_part2.ipynb` — full WCM simulation, inspect the network's internal state at each step
-* `siegelmann_sontag.ipynb` — Siegelmann-Sontag stack machine simulation
+* `balanced_parentheses_part1.ipynb` - build the transition layer from scratch, step through the balanced parentheses problem
+* `balanced_parentheses_part2.ipynb` - full WCM simulation, inspect the network's internal state at each step
+* `siegelmann_sontag.ipynb` - Siegelmann-Sontag stack machine simulation
