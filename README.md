@@ -1,6 +1,6 @@
 # Turing
 
-Simulate Turing machines with neural networks. No training required: weights are set analytically from the machine description.
+Simulate Turing machines with neural networks. No training required. Weights are set analytically from the machine description.
 
 Two simulators are available, each implementing a different theoretical result:
 
@@ -28,41 +28,9 @@ pip install -e .
 ```python
 from turing.wcm.simulator import Description, Simulator
 
-transition_function = {
-    ("I", "B") : ("R", "B",  1),
-    ("R", "(") : ("R", "(",  1),
-    ("R", ")") : ("M", "*", -1),
-    ("R", "*") : ("R", "*",  1),
-    ("R", "E") : ("V", "E", -1),
-    ("M", "B") : ("F", "*", -1),
-    ("M", "(") : ("R", "*",  1),
-    ("M", "*") : ("M", "*", -1),
-    ("V", "(") : ("F", "*", -1),
-    ("V", "*") : ("V", "*", -1),
-    ("V", "B") : ("T", "B",  1),
-}
-terminal_states = ["T", "F"]
-
-description = Description(transition_function, terminal_states)
-tx = Simulator(description, T=100)
+# Description() defaults to the balanced parentheses machine
+tx = Simulator(Description(), T=100)
 tx.simulate("B()((()(()))())E")
-```
-
-**Run the SS simulator** (4-layer)
-
-```python
-from turing.ss.simulator import (
-    Description, Simulator,
-    balanced_parentheses_delta_stack,
-    balanced_parentheses_terminal_states,
-)
-
-description = Description(
-    balanced_parentheses_delta_stack,
-    balanced_parentheses_terminal_states,
-)
-tx = Simulator(description, version=4)
-tx.simulate("(()())")
 ```
 
 ---
@@ -73,14 +41,14 @@ We want to determine whether a string of parentheses is balanced; e.g. `"(())"` 
 
 A Turing machine solves this by reading the tape `"B()((()(()))())E"` (where `B` and `E` mark the ends). The machine has a *head* that starts at `B` and moves left or right, reading and writing symbols according to its rules. The head position is shown as `^`:
 
-<p><img src="docs/img/bptape_terminal.png" width="308" alt="turing machine solving balanced parentheses" /></p>
+<p><img src="docs/img/bptape_terminal.png" width="40%" alt="turing machine solving balanced parentheses" /></p>
 
 The machine has a discrete internal state (I, R, M, V, T, F in the animation). Its behavior is fully defined by a *transition function* $\delta$: given the current state and symbol under the head, $\delta$ outputs (1) the symbol to write, (2) the next state, and (3) which direction to move.
 
 We can visualize $\delta$ as a directed graph. States are vertices; edges are transitions. The initial state is a diamond; terminal states are squares.
 
 <p align="center">
-<img src="docs/img/tm.png" alt="turing machine transition graph for balanced parentheses" width="60%" />
+<img src="docs/img/tm.png" alt="turing machine transition graph for balanced parentheses" width="70%" />
 </p>
 
 The machine halts when it reaches a terminal state (T = balanced, F = not balanced).
@@ -119,7 +87,7 @@ tx.simulate(tape)
 # prints each step and returns "T" (balanced) or "F" (not balanced)
 ```
 
-`Simulator(description, T=100)` constructs a PyTorch model and analytically sets its weights to simulate the given Turing machine - no training involved. `T` is the maximum number of steps.
+`Simulator(description, T=100)` constructs a PyTorch model and analytically sets its weights to simulate the given Turing machine without any training. `T` is the maximum number of steps.
 
 ---
 
@@ -129,4 +97,3 @@ The `notebooks/` directory contains interactive walkthroughs:
 
 * `balanced_parentheses_part1.ipynb` - build the transition layer from scratch, step through the balanced parentheses problem
 * `balanced_parentheses_part2.ipynb` - full WCM simulation, inspect the network's internal state at each step
-* `siegelmann_sontag.ipynb` - Siegelmann-Sontag stack machine simulation

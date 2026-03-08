@@ -1,4 +1,3 @@
-from encodings import normalize_encoding
 import torch
 from torch import Tensor
 from torch.nn import (
@@ -6,7 +5,6 @@ from torch.nn import (
 )
 from turing.ss.networks import SiegelmannSontag1, SiegelmannSontag4
 from turing.types import (
-    StackDelta,
     State
 )
 from typing import List
@@ -129,7 +127,7 @@ class Description():
     def expand_wildcards(self, delta):
         """Fill in wild cards in dict keys with all elements in domain
         """
-        # TODO: bug that allows top=1 with nonempty=0
+        # TODO: does not filter out invalid keys like top=1 with nonempty=0
         x = delta
         domains = self.get_domains()
         for i, domain in enumerate(domains):
@@ -147,7 +145,10 @@ class Description():
 
 
 class Simulator(Module):
-    """TODO:
+    """Neural network simulator for a 2-stack machine.
+
+    Supports version=4 (4-layer RNN) and version=1
+    (1-layer RNN).
     """
 
     def __init__(self, description: Description, version = 1):
@@ -170,25 +171,24 @@ class Simulator(Module):
         self._original_alphabet = description.original_alphabet
         self._a2i = {a: i for i, a in enumerate(self.original_alphabet)}
 
-        # i2b = ('empty', 'nonempty')
-
         if version == 4:
-            # be consistent with ConfigurationDetector4(self.s+1, self.p).get_v()
-            # y = self.generate_y(full_description)
-
             # neural network settings
             self._p = 2
             self._cantor_base = 4
-            self._cantor_p = 1/2   # TODO: fix this factor
+            self._cantor_p = 1/2   # encoding coefficient; base=4 maps {0,1} to {1/4, 3/4}
             # network module definitions
             self.model = SiegelmannSontag4(self.s, self.p)
             self.model.fit(delta, self.z2i, self.states, self.alphabet)
         elif version == 1:
             # neural network settings
             self._p = 2
-            self._cantor_base = 40
-            self._cantor_p = 2
+            # Base = 10p^2 (paper's formula). The pop formula amplifies error
+            # by base times per step, limiting float64 to ~9 pops from one stack.
+            self._cantor_base = 10 * self._p ** 2
+            self._cantor_p = self._p
             self.model = SiegelmannSontag1(self.s, self.p)
+            # float64 required: pop formula amplifies error by base per step
+            self.model.double()
             self.model.fit(delta, self.z2i, self.states, self.alphabet)
 
     @property
@@ -257,7 +257,7 @@ class Simulator(Module):
 
         Prints the machine state at each step and returns the terminal state.
         """
-        binary_string = list(map(lambda x: self.a2i[x], string))
+        binary_string = [self.a2i[c] for c in string]
         initial_stack = self.encoding_function(binary_string)
 
         if self.version == 4:
@@ -277,19 +277,22 @@ class Simulator(Module):
         elif self.version == 1:
             top = int(binary_string[0]) if len(binary_string) > 0 else None
             s, p = self.s, self.p
-            x = torch.zeros(self.s + 3 * 4 * self.p)
+            B = self._cantor_base
+            x = torch.zeros(self.s + 3 * 4 * self.p, dtype=torch.float64)
             noisy_top, noisy_nonempty = self.model._sample(top)
             # state
             x[0] = 1
-            # TODO: what indexes should have this?
-            low_value = (-8 * p**2 + 2)
-            x[s + 4*p:] = low_value
-            # noisy_sub_stack
+            # non-active tracks: match linear_sub_top(0) and linear_sub_nonempty(0)
+            low_top = -(2*p+1)*(B-2)
+            low_ne = -(B-4*p-2)
+            x[s + 4*p:s + 8*p] = low_top
+            x[s + 8*p:] = low_ne
+            # noisy_sub_stack: noop track of stack 0
             x[s] = initial_stack
-            # noisy_sub_top
-            x[s + 8] = noisy_top
-            # noisy_sub_nonempty
-            x[s + 16] = noisy_nonempty
+            # noisy_sub_top: noop track of stack 0
+            x[s + 4*p] = noisy_top
+            # noisy_sub_nonempty: noop track of stack 0
+            x[s + 8*p] = noisy_nonempty
             o = x
             for step in range(T):
                 x_state = o[:self.s].detach()
@@ -302,16 +305,16 @@ class Simulator(Module):
 
 
 def encoding_function(a: str, base: int, p: int):
-    """Encoding function $\delta$ mapping a binary string to a rational number.
+    r"""Encoding function $\delta$ mapping a binary string to a rational number.
 
-    E.g.
+    e.g.
         \delta["01"] = 1/4 + 3/16
     """
     if a == '': return 0
     k = len(a)
     a = list(map(int, a))
-    a = torch.Tensor(a)
-    denom = base**torch.arange(1, k+1)
+    a = torch.tensor(a, dtype=torch.float64)
+    denom = base**torch.arange(1, k+1, dtype=torch.float64)
     num = base-1+4*p*(a-1)
     o = (num / denom).sum().item()
     return o
