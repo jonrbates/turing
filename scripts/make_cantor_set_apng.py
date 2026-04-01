@@ -47,7 +47,8 @@ def show_encoding_in_cantor_set_grid(s: str, paper=False):
     plt.plot([x, x], [u, l], color=active_encoding_color, linewidth=2)
     label_weight = 'bold' if not paper else 'normal'
     label_fs = 14 if paper else None
-    plt.text(x, .5*(u+l) - 1.0, f' \"{s}\"', color=active_text_color,
+    label_offset = -0.8 if paper else -0.1
+    plt.text(x, .5*(u+l) + label_offset, f' \"{s}\"', color=active_text_color,
              weight=label_weight, fontsize=label_fs, clip_on=False)
 
     # x axis
@@ -68,7 +69,7 @@ def show_encoding_in_cantor_set_grid(s: str, paper=False):
     plt.xlim([0, 1])
 
     # y axis
-    ax.set_ylabel('string length', fontsize=label_fs)
+    ax.set_ylabel('stack length', fontsize=label_fs)
     ax.spines['left'].set_color(axis_color)
     ax.spines['right'].set_visible(False)
     plt.yticks([-0.5, -1.5, -2.5, -3.5, -4.5], color=axis_color,
@@ -103,7 +104,21 @@ with tempfile.TemporaryDirectory() as d:
         plt.close(fig)
         fig_names.append(name)
 
-    frames = [Image.open(f).convert("RGBA") for f in fig_names]
+    frames = [Image.open(f).convert("RGB") for f in fig_names]
+
+    # Pad all frames to the same size (bbox_inches='tight' may crop differently)
+    max_w = max(f.width for f in frames)
+    max_h = max(f.height for f in frames)
+    bg_color = tuple(int(_C["bg"].lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+    padded = []
+    for f in frames:
+        if f.size != (max_w, max_h):
+            canvas = Image.new("RGB", (max_w, max_h), bg_color)
+            canvas.paste(f, (0, 0))
+            padded.append(canvas)
+        else:
+            padded.append(f)
+    frames = padded
 
 frames[0].save(
     out, save_all=True, append_images=frames[1:],

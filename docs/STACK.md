@@ -167,7 +167,8 @@ The 4-layer RNN (`SiegelmannSontag4`) processes one step of the stack machine th
 
 **Why $s{-}1$?** One state dimension is redundant: if no other state is active, the machine must be in state 0. The first layer reconstructs the full $s$-dimensional state from $s{-}1$ inputs.
 
-<p align="center"><img src="img/ss4_network.png" alt="SS4 4-layer architecture" width="50%" /></p>
+<!--
+<p align="center"><img src="img/ss4_network.png" alt="SS4 4-layer architecture" width="50%" /></p> -->
 
 #### F4: Configuration Reading
 
@@ -181,7 +182,7 @@ Three parallel linear layers extract information from the raw input:
 
 The outputs are concatenated with the raw stack values and passed through $\sigma$:
 
-$$o = \sigma\bigl(\texttt{linear\_state0}(x_{\text{state}}),\; \texttt{linear\_top}(x_{\text{stack}}),\; \texttt{linear\_nonempty}(x_{\text{stack}}),\; x_{\text{stack}}\bigr)$$
+$$o = \sigma\bigl(\mathtt{linear\_state0}(x_{\text{state}}),\; \mathtt{linear\_top}(x_{\text{stack}}),\; \mathtt{linear\_nonempty}(x_{\text{stack}}),\; x_{\text{stack}}\bigr)$$
 
 After $\sigma$, the first $s+2p$ elements are clean binary values: one-hot state, top symbols, and non-empty flags.
 
@@ -209,7 +210,7 @@ Each stack has 4 action slots: noop, push 0, push 1, pop. The indicator selects 
 | push 1 | $1/4$ | $3/4$ | $x/4 + 3/4$ |
 | pop | $4$ | $-2\cdot\text{top}-1$ | $4x - 2\cdot\text{top} - 1$ |
 
-The transition output is $\sigma\bigl(\beta(u) + \gamma(u) - 1 + \texttt{linear\_update}(o)\bigr)$. Since exactly one action indicator is 1 and the rest are 0, only the correct operation survives after the $-1$ bias and $\sigma$ clamping.
+The transition output is $\sigma\bigl(\beta(u) + \gamma(u) - 1 + \mathtt{linear\_update}(o)\bigr)$. Since exactly one action indicator is 1 and the rest are 0, only the correct operation survives after the $-1$ bias and $\sigma$ clamping.
 
 #### F1: Output
 
