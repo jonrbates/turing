@@ -150,13 +150,15 @@ class SiegelmannSontag1(Module):
         x[:, :4*p] = low_top    # noisy_top positions
         x[:, 4*p:8*p] = low_ne  # noisy_nonempty positions
         row = 0
-        for _, ((z, top_0, top_1), (z_next, action_1, action_2)) in enumerate(delta.items()):
+        for key, value in delta.items():
+            z, tops = key[0], key[1:]
+            z_next, actions = value[0], value[1:]
 
             substack_action_indicator = torch.zeros(4*p, dtype=dtype)
-            for k, action in enumerate([action_1, action_2]):
+            for k, action in enumerate(actions):
                 offset = self.map_action(action)
                 substack_action_indicator[4*k+offset] = 1
-            d = self.noisy_sampler((top_0, top_1))
+            d = self.noisy_sampler(tops)
             # generate various inputs corresponding to the current key
             for i in self.configuration_detector.generate_i():
                 # we skip None cases, so this is just combinations of substack 4^p

@@ -11,12 +11,16 @@ from turing.wcm.simulator import Simulator
 with open("scripts/terminal_colors.json") as _f:
     _J = json.load(_f)
 
+import sys
+
+_paper = '--paper' in sys.argv
+
 C = dict(
-    bg        = _J["bg"],
-    ink       = _J["tape"],
-    node_fill = _J["bg"],
-    label     = _J["labels"],
-    outline   = _J["bg"],
+    bg        = 'none'    if _paper else _J["bg"],
+    ink       = 'black'   if _paper else _J["tape"],
+    node_fill = 'white'   if _paper else _J["bg"],
+    label     = 'black'   if _paper else _J["labels"],
+    outline   = 'white'   if _paper else _J["bg"],
 )
 
 # ── TM data ───────────────────────────────────────────────────────────────────
@@ -169,6 +173,7 @@ with plt.xkcd(scale=1.2, length=120, randomness=3):
                 fontsize=17, fontweight='bold', color=C['ink'], zorder=5)
 
     plt.tight_layout()
-    out = 'docs/img/tm.png'
-    plt.savefig(out, dpi=600, bbox_inches='tight', facecolor=C['bg'])
+    out = 'docs/img/tm_paper.png' if _paper else 'docs/img/tm.png'
+    plt.savefig(out, dpi=600, bbox_inches='tight',
+                facecolor=C['bg'], transparent=_paper)
     print(f"Saved {out}")

@@ -118,27 +118,28 @@ class Description():
         """Possible values of wildcard for each key
         """
         state_domain = set(self.states) - set(self.terminal_states)
-        return [
-            state_domain,
-            (None, 0, 1),
-            (None, 0, 1)
-        ]
+        return [state_domain] + [(None, 0, 1)] * self.p
 
     def expand_wildcards(self, delta):
-        """Fill in wild cards in dict keys with all elements in domain
+        """Fill in wild cards in dict keys with all elements in domain.
+
+        Specific entries take priority over wildcard expansions.
         """
         # TODO: does not filter out invalid keys like top=1 with nonempty=0
         x = delta
         domains = self.get_domains()
         for i, domain in enumerate(domains):
             out = {}
+            # Wildcard entries first
             for k, v in x.items():
                 if k[i] == '*':
                     k = list(k)
                     for elem in domain:
                         k[i] = elem
                         out[tuple(k)] = v
-                else:
+            # Specific entries overwrite
+            for k, v in x.items():
+                if k[i] != '*':
                     out[k] = v
             x = out
         return x
@@ -181,7 +182,7 @@ class Simulator(Module):
             self.model.fit(delta, self.z2i, self.states, self.alphabet)
         elif version == 1:
             # neural network settings
-            self._p = 2
+            self._p = description.p
             # Base = 10p^2 (paper's formula). The pop formula amplifies error
             # by base times per step, limiting float64 to ~9 pops from one stack.
             self._cantor_base = 10 * self._p ** 2

@@ -12,7 +12,13 @@ Rather than operating on a tape directly, Siegelmann & Sontag reformulate the pr
 
 For the balanced parentheses problem, two stacks are enough:
 
-<p><img src="img/bpstack_terminal.png" alt="2-stack machine solving balanced parentheses" width="40%" /></p>
+<p>
+<img
+src="img/bpstack_terminal.png"
+alt="2-stack machine solving balanced parentheses"
+width="20%"
+/>
+</p>
 
 The transition function for a $p$-stack machine takes the current state and the top of each stack as inputs, and outputs the next state and a stack operation for each stack:
 
@@ -44,7 +50,7 @@ terminal_states = ['T', 'F']
 
 The key mathematical trick is encoding an entire stack as a single rational number using a *Cantor-set encoding*. For a binary stack (symbols 0 and 1), each stack value is encoded as:
 
-$$\delta(a_1 a_2 \cdots a_k) = \sum_{i=1}^{k} \frac{b - 1 + 4p(a_i - 1)}{b^i}$$
+$$\mathcal{E}(a_1 a_2 \cdots a_k) = \sum_{i=1}^{k} \frac{b - 1 + 4p(a_i - 1)}{b^i}$$
 
 where $b$ is the base and $p$ is a scaling factor. For example with $b=4$, $p=1/2$:
 
@@ -56,7 +62,13 @@ where $b$ is the base and $p$ is a scaling factor. For example with $b=4$, $p=1/
 | `[0, 0, 0]` | 21/64 |
 
 
-<p align="center"><img src="img/cantor_set.png" alt="cycling values in the 4-Cantor set" width="60%" /></p>
+<p align="center">
+<img
+src="img/cantor_set.png"
+alt="cycling values in the 4-Cantor set"
+width="60%"
+/>
+</p>
 
 The encoding has a crucial property: **push, pop, and peek are all linear functions of the encoded value**. This means the network can manipulate the stack using only linear layers and a saturated ReLU activation $\sigma(x) = \mathrm{clamp}(x, 0, 1)$.
 
@@ -131,7 +143,13 @@ tx = Simulator(description, version=4)
 
 ### Architecture
 
-<p align="center"><img src="img/ss1_architecture.png" alt="Siegelmann-Sontag architecture" width="60%" /></p>
+<p align="center">
+<img
+src="img/ss1_architecture.png"
+alt="Siegelmann-Sontag architecture"
+width="60%"
+/>
+</p>
 
 The network state at each step is a vector containing:
 - **State part** - one-hot encoding of the current machine state
@@ -140,6 +158,76 @@ The network state at each step is a vector containing:
 At each step, a *configuration detector* reads the current state and the top of each stack, identifies the matching transition rule, and produces the next state and stack operations. The weights are set analytically via least-squares from the transition function.
 
 The `saturated_relu` $\sigma(x) = \mathrm{clamp}(x,0,1)$ serves as the nonlinearity throughout, since its behavior on rational inputs is exact.
+
+---
+
+### The 4-Layer Architecture (version=4)
+
+The 4-layer RNN (`SiegelmannSontag4`) processes one step of the stack machine through four sequential layers, each followed by $\sigma$ (saturated ReLU). The network input $x$ has dimension $s{-}1+p$, where $s$ is the number of states and $p$ is the number of stacks.
+
+**Why $s{-}1$?** One state dimension is redundant: if no other state is active, the machine must be in state 0. The first layer reconstructs the full $s$-dimensional state from $s{-}1$ inputs.
+
+<p align="center"><img src="img/ss4_network.png" alt="SS4 4-layer architecture" width="50%" /></p>
+
+#### F4: Configuration Reading
+
+Three parallel linear layers extract information from the raw input:
+
+| Layer | Formula | Purpose |
+|---|---|---|
+| `linear_state0` | $w_0 = -1,\; b_0 = 1;\; w_{j} = e_j$ | Recover full $s$-dim state: state 0 = $1 - \sum_{j>0} x_j$ |
+| `linear_top` | $4x - 2$ | Extract top-of-stack symbol: $\sigma(4x-2)$ maps Cantor encoding to 0 or 1 |
+| `linear_nonempty` | $4x$ | Detect non-empty stack: $\sigma(4x)$ is 0 iff stack is empty |
+
+The outputs are concatenated with the raw stack values and passed through $\sigma$:
+
+$$o = \sigma\bigl(\texttt{linear\_state0}(x_{\text{state}}),\; \texttt{linear\_top}(x_{\text{stack}}),\; \texttt{linear\_nonempty}(x_{\text{stack}}),\; x_{\text{stack}}\bigr)$$
+
+After $\sigma$, the first $s+2p$ elements are clean binary values: one-hot state, top symbols, and non-empty flags.
+
+#### F3: Configuration Detector
+
+The configuration detector (`ConfigurationDetector4`) is a single linear layer followed by $\sigma$, with $s \cdot 3^p$ neurons. Each neuron fires for exactly one combination of (state, top/nonempty pattern).
+
+Why $3^p$? Each stack has three valid configurations: empty ($\text{top}=0, \text{nonempty}=0$), top-is-0 ($\text{top}=0, \text{nonempty}=1$), top-is-1 ($\text{top}=1, \text{nonempty}=1$). The fourth case ($\text{top}=1, \text{nonempty}=0$) is impossible and skipped.
+
+Each neuron's weight row is $[e_z \mid v_i]$ — a one-hot state selector concatenated with a binary pattern. The bias is $-\sum v_i$, creating a hard-AND gate: the neuron outputs 1 only when **all** inputs match. The weights are universal (independent of the transition function).
+
+#### F2: Transition
+
+Two learned linear layers read the configuration detector output:
+
+- **$\beta$**: maps the $s \cdot 3^p$ indicator vector to the next state ($s$ dims)
+- **$\gamma$**: maps to stack action indicators ($4p$ dims, with bias $-1$)
+
+Each stack has 4 action slots: noop, push 0, push 1, pop. The indicator selects which action to apply. Meanwhile, `linear_update` encodes the four stack operations as linear functions of the stack value:
+
+| Action | Weight | Bias | Effect on Cantor value $x$ |
+|---|---|---|---|
+| noop | $1$ | $0$ | $x$ (identity) |
+| push 0 | $1/4$ | $1/4$ | $x/4 + 1/4$ |
+| push 1 | $1/4$ | $3/4$ | $x/4 + 3/4$ |
+| pop | $4$ | $-2\cdot\text{top}-1$ | $4x - 2\cdot\text{top} - 1$ |
+
+The transition output is $\sigma\bigl(\beta(u) + \gamma(u) - 1 + \texttt{linear\_update}(o)\bigr)$. Since exactly one action indicator is 1 and the rest are 0, only the correct operation survives after the $-1$ bias and $\sigma$ clamping.
+
+#### F1: Output
+
+The final layer reassembles the output vector:
+- Drops state 0 (back to $s{-}1$ dims, since state 0 is implicit)
+- Sums the 4 sub-stack slots back to 1 scalar per stack (only the active operation produced a nonzero value)
+
+#### How fit() Works
+
+The configuration detector weights (F3) are fixed and universal. Only $\beta$ and $\gamma$ need to be set per-machine. `fit()` generates training pairs from the transition function, runs them through the configuration detector to get $H$, then solves $H \cdot C^T = Y$ via `torch.linalg.solve`. The solution $C$ is split into $\beta$ (state rows) and $\gamma$ (action rows).
+
+#### Why saturated ReLU?
+
+Standard ReLU is unbounded: $\text{ReLU}(x) = \max(0, x)$. Saturated ReLU clamps to $[0, 1]$: $\sigma(x) = \min(\max(0, x), 1)$. This is essential because:
+
+1. **Cantor values live in $[0, 1]$** — an unbounded activation would corrupt the encoding
+2. **Detection relies on sharp boundaries** — $\sigma(4x - 2)$ cleanly separates top=0 ($x < 1/2$) from top=1 ($x > 1/2$)
+3. **Exact on rationals** — no approximation error on valid inputs
 
 ---
 

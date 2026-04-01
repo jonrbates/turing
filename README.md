@@ -41,14 +41,24 @@ We want to determine whether a string of parentheses is balanced; e.g. `"(())"` 
 
 A Turing machine solves this by reading the tape `"B()((()(()))())E"` (where `B` and `E` mark the ends). The machine has a *head* that starts at `B` and moves left or right, reading and writing symbols according to its rules. The head position is shown as `^`:
 
-<p><img src="docs/img/bptape_terminal.png" width="40%" alt="turing machine solving balanced parentheses" /></p>
+<p>
+<img
+src="docs/img/bptape_terminal.png"
+alt="turing machine solving balanced parentheses"
+width="30%"
+/>
+</p>
 
 The machine has a discrete internal state (I, R, M, V, T, F in the animation). Its behavior is fully defined by a *transition function* $\delta$: given the current state and symbol under the head, $\delta$ outputs (1) the symbol to write, (2) the next state, and (3) which direction to move.
 
 We can visualize $\delta$ as a directed graph. States are vertices; edges are transitions. The initial state is a diamond; terminal states are squares.
 
 <p align="center">
-<img src="docs/img/tm.png" alt="turing machine transition graph for balanced parentheses" width="70%" />
+<img
+src="docs/img/tm.png"
+alt="turing machine transition graph for balanced parentheses"
+width="80%"
+/>
 </p>
 
 The machine halts when it reaches a terminal state (T = balanced, F = not balanced).
@@ -97,3 +107,13 @@ The `notebooks/` directory contains interactive walkthroughs:
 
 * `balanced_parentheses_part1.ipynb` - build the transition layer from scratch, step through the balanced parentheses problem
 * `balanced_parentheses_part2.ipynb` - full WCM simulation, inspect the network's internal state at each step
+
+---
+
+### Paper-to-code mapping
+
+| Paper | Code | What it implements |
+| --- | --- | --- |
+| WCM21 | `src/turing/wcm/` | Transformer-style TM simulator |
+| SS95, §4 | `src/turing/ss/` `version=4` | 4-layer RNN TM simulator |
+| SS95, §1 | `src/turing/ss/` `version=1` | 1-layer RNN TM simulator |
