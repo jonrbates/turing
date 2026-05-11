@@ -16,9 +16,10 @@ Two simulators are available, each implementing a different theoretical result:
 ```shell
 git clone https://github.com/jonrbates/turing.git
 cd turing
-python3.12 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
+# CPU-only PyTorch (skip the GPU wheels)
 pip install "torch>=2.1" --index-url https://download.pytorch.org/whl/cpu
 pip install -e .
 ```
