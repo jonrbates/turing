@@ -1,6 +1,6 @@
 # Siegelmann & Sontag: Neural Nets as Turing Machines
 
-Siegelmann and Sontag proved in 1992 that a fixed recurrent neural network can simulate any Turing machine. Their construction works by encoding the Turing machine tape as numbers stored in the network's hidden state.
+Siegelmann and Sontag proved in 1992 that a fixed recurrent neural network can simulate any Turing machine.
 
 This document explains their approach and how to use the implementation in this repo.
 
@@ -8,7 +8,7 @@ This document explains their approach and how to use the implementation in this 
 
 ### The Core Idea: Stacks Instead of a Tape
 
-Rather than operating on a tape directly, Siegelmann & Sontag reformulate the problem using *$p$-stack machines*. A $p$-stack machine is equivalent to a Turing machine but stores memory in $p$ stacks instead of a tape. Each stack supports three operations: **push**, **pop**, and **peek** (read the top).
+Rather than operating on a tape directly, Siegelmann & Sontag reformulate the problem using $p$-*stack machines*. A $p$-stack machine is equivalent to a Turing machine but stores memory in $p$ stacks instead of a tape. Each stack supports three operations: **push**, **pop**, and **peek** (read the top).
 
 For the balanced parentheses problem, two stacks are enough:
 
@@ -50,9 +50,9 @@ terminal_states = ['T', 'F']
 
 The key mathematical trick is encoding an entire stack as a single rational number using a *Cantor-set encoding*. For a binary stack (symbols 0 and 1), each stack value is encoded as:
 
-$$\mathcal{E}(a_1 a_2 \cdots a_k) = \sum_{i=1}^{k} \frac{b - 1 + 4p(a_i - 1)}{b^i}$$
+$$\mathcal{E}(a_1 a_2 \cdots a_k) = \sum_{i=1}^{k} \frac{b - 1 + 4\rho(a_i - 1)}{b^i}$$
 
-where $b$ is the base and $p$ is a scaling factor. For example with $b=4$, $p=1/2$:
+where $b$ is the base and $\rho$ is a scaling factor. For example with $b=4$, $\rho=1/2$:
 
 | Stack contents | Encoded value |
 |---|---|
@@ -66,7 +66,7 @@ where $b$ is the base and $p$ is a scaling factor. For example with $b=4$, $p=1/
 <img
 src="img/cantor_set.png"
 alt="cycling values in the 4-Cantor set"
-width="60%"
+width="50%"
 />
 </p>
 
@@ -78,9 +78,9 @@ The encoding has a crucial property: **push, pop, and peek are all linear functi
 
 The paper describes two constructions:
 
-**4-layer (`version=4`)** - uses 4 layers per step. Each layer is a stage of the computation. Fully implemented and working.
+**`version=4`**. Uses 4 layers per step. Each layer is a stage of the computation.
 
-**1-layer (`version=1`)** - uses a single recurrent layer, operating in "real time" (one network step per Turing machine step). Uses base $b = 10p^2$ (= 40 for $p=2$) and float64 arithmetic. Reliable for strings up to ~8 characters due to error amplification in the pop operation ($b\times$ per pop).
+**`version=1`**. Uses a single recurrent layer, operating in "real time" (one network step per Turing machine step). Uses base $b = 10\rho^2$ (= 40 for $\rho=2$) and float64 arithmetic. Reliable for strings up to ~8 characters due to error amplification in the pop operation ($b\times$ per pop).
 
 ---
 
@@ -221,14 +221,6 @@ The final layer reassembles the output vector:
 #### How fit() Works
 
 The configuration detector weights (F3) are fixed and universal. Only $\beta$ and $\gamma$ need to be set per-machine. `fit()` generates training pairs from the transition function, runs them through the configuration detector to get $H$, then solves $H \cdot C^T = Y$ via `torch.linalg.solve`. The solution $C$ is split into $\beta$ (state rows) and $\gamma$ (action rows).
-
-#### Why saturated ReLU?
-
-Standard ReLU is unbounded: $\text{ReLU}(x) = \max(0, x)$. Saturated ReLU clamps to $[0, 1]$: $\sigma(x) = \min(\max(0, x), 1)$. This is essential because:
-
-1. **Cantor values live in $[0, 1]$** — an unbounded activation would corrupt the encoding
-2. **Detection relies on sharp boundaries** — $\sigma(4x - 2)$ cleanly separates top=0 ($x < 1/2$) from top=1 ($x > 1/2$)
-3. **Exact on rationals** — no approximation error on valid inputs
 
 ---
 

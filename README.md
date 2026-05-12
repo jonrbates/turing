@@ -118,3 +118,19 @@ The `notebooks/` directory contains interactive walkthroughs:
 | WCM21 | `src/turing/wcm/` | Transformer-style TM simulator |
 | SS95, §4 | `src/turing/ss/` `version=4` | 4-layer RNN TM simulator |
 | SS95, §1 | `src/turing/ss/` `version=1` | 1-layer RNN TM simulator |
+
+---
+
+### Citation
+
+If you use this code, please cite:
+
+```bibtex
+@misc{bates2026turing,
+  author        = {Jonathan Bates},
+  title         = {A {PyTorch} Library of {Turing}-Complete Neural Networks},
+  year          = {2026},
+  eprint        = {2605.08150},
+  archivePrefix = {arXiv},
+}
+```
