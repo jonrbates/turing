@@ -123,8 +123,6 @@ The `notebooks/` directory contains interactive walkthroughs:
 
 ### Citation
 
-If you use this code, please cite:
-
 ```bibtex
 @misc{bates2026turing,
   author        = {Jonathan Bates},
