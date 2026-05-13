@@ -16,6 +16,7 @@ Two simulators are available, each implementing a different theoretical result:
 ```shell
 git clone https://github.com/jonrbates/turing.git
 cd turing
+# requires python3.10+
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
